@@ -1,0 +1,39 @@
+name: Auto Stock Report
+
+on:
+  schedule:
+    # 매일 평일(월~금) 한국 시간 오후 3시 40분에 실행 (UTC 기준 06:40)
+    - cron: '40 6 * * 1-5'
+  workflow_dispatch: # 버튼을 눌러서 수동으로 즉시 실행할 수 있는 옵션
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write
+
+    steps:
+      - name: 저장소 파일 가져오기
+        uses: actions/checkout@v3
+
+      - name: 파이썬 설치하기
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.13'
+
+      - name: 필요한 도구 설치하기
+        run: |
+          pip install finance-datareader pandas-ta jinja2
+
+      - name: 주식 분석 파이썬 스크립트 실행하기
+        run: |
+          python main.py
+
+      - name: 새로 생성된 리포트(HTML) 파일 저장하기
+        run: |
+          git config --global user.name "GitHub Action Bot"
+          git config --global user.email "action@github.com"
+          git add index.html
+          git commit -m "📈 장 마감 주식 시그널 자동 업데이트" || echo "변경된 내용이 없습니다."
+          git push
